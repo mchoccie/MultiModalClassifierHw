@@ -466,32 +466,32 @@ def create_convnet(num_classes, img_shape):
     
     num_ftrs = mobilenet.classifier[1].in_features
     mobilenet.classifier[1] = nn.Linear(num_ftrs, 3, bias=True)
-    # mobilenet.features[0][0].kernel_size = (5, 5)
-    # modified_block = nn.Sequential(
+    mobilenet.features[0][0].kernel_size = (5, 5)
+    modified_block = nn.Sequential(
 
                     
-    #                 # Customize layers here, for example:
-    #                 nn.Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1), groups = 32, bias = False),  # New convolutional layer
-    #                 nn.BatchNorm2d(32, eps=1e-05, momentum=0.1),
-    #                 nn.ReLU6(inplace=True),
-    #                 nn.Conv2d(32, 16, kernel_size=(1, 1), stride=(1, 1), bias=False),
-    #                 nn.BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-    #             )
-    # modified_block2 = nn.Sequential(
+                    # Customize layers here, for example:
+                    nn.Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1), groups = 32, bias = False),  # New convolutional layer
+                    nn.BatchNorm2d(32, eps=1e-05, momentum=0.1),
+                    nn.ReLU6(inplace=True),
+                    nn.Conv2d(32, 16, kernel_size=(1, 1), stride=(1, 1), bias=False),
+                    nn.BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+                )
+    modified_block2 = nn.Sequential(
 
                     
-    #                 # Customize layers here, for example:
-    #                 nn.Conv2d(24, 144, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1), bias = False),  # New convolutional layer
-    #                 nn.BatchNorm2d(144, eps=1e-05, momentum=0.1),
-    #                 nn.ReLU6(inplace=True),
-    #                 nn.Conv2d(144, 144, kernel_size=(5, 5), stride=(1, 1), bias=False),
-    #                 nn.BatchNorm2d(144, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-    #                 nn.ReLU6(inplace=True),
-    #                 nn.Conv2d(144, 24, kernel_size=(1, 1), stride=(1, 1), bias=False),
-    #                 nn.BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-    #             )
-    # mobilenet.features[1] = modified_block
-    # mobilenet.features[3] = modified_block2
+                    # Customize layers here, for example:
+                    nn.Conv2d(24, 144, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1), bias = False),  # New convolutional layer
+                    nn.BatchNorm2d(144, eps=1e-05, momentum=0.1),
+                    nn.ReLU6(inplace=True),
+                    nn.Conv2d(144, 144, kernel_size=(5, 5), stride=(1, 1), bias=False),
+                    nn.BatchNorm2d(144, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+                    nn.ReLU6(inplace=True),
+                    nn.Conv2d(144, 24, kernel_size=(1, 1), stride=(1, 1), bias=False),
+                    nn.BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+                )
+    mobilenet.features[1] = modified_block
+    mobilenet.features[3] = modified_block2
     return mobilenet
 
 #https://pytorch.org/vision/stable/models.html
