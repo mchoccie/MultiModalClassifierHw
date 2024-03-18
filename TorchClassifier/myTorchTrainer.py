@@ -73,9 +73,9 @@ parser.add_argument('--data_type', default='trainonly', choices=['trainonly','tr
                     help='the type of data') 
 parser.add_argument('--data_path', type=str, default="/data/cmpe249-fa23/ImageClassData",
                     help='path to get data') #/Developer/MyRepo/ImageClassificationData; r"E:\Dataset\ImageNet\tiny-imagenet-200"
-parser.add_argument('--img_height', type=int, default=224,
+parser.add_argument('--img_height', type=int, default=32,
                     help='resize to img height, 224')
-parser.add_argument('--img_width', type=int, default=224,
+parser.add_argument('--img_width', type=int, default=32,
                     help='resize to img width, 224')
 parser.add_argument('--save_path', type=str, default='./outputs/',
                     help='path to save the model')
@@ -101,7 +101,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
-parser.add_argument('--optimizer', default='SGD', choices=['SGD', 'Adam', 'adamresnetcustomrate'],
+parser.add_argument('--optimizer', default='SGD', choices=['SGD', 'Adam', 'adamresnetcustomrate', 'AdamW'],
                     help='select the optimizer')
 parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
                     help='number of data loading workers (default: 2)')
@@ -113,7 +113,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--classmap', default='TorchClassifier/Datasetutil/imagenet1000id2label.json', type=str, metavar='FILENAME',
                     help='path to class to idx mapping file (default: "")')
-parser.add_argument('--GPU', type=bool, default=True,
+parser.add_argument('--GPU', type=bool, default=False,
                     help='use GPU')
 parser.add_argument('--gpuid', default=0, type=int,
                     help='GPU id to use.')
@@ -160,10 +160,10 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
         data_time = AverageMeter('Data', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
-        top5 = AverageMeter('Acc@5', ':6.2f')
+        top3 = AverageMeter('Acc@5', ':6.2f')
         progress = ProgressMeter(
             len(dataloaders['train']),
-            [batch_time, data_time, losses, top1, top5],
+            [batch_time, data_time, losses, top1, top3],
             prefix="Epoch: [{}]".format(epoch))
 
         # Each epoch has a training and validation phase
@@ -211,10 +211,10 @@ def train_model(model, dataloaders, dataset_sizes, criterion, optimizer, schedul
                 running_loss += loss.item() * inputs.size(0)#batch size
                 running_corrects += torch.sum(preds == labels.data)
                 # measure accuracy and record loss
-                acc1, acc5 = accuracy(outputs, labels, topk=(1, 5))
+                acc1, acc3 = accuracy(outputs, labels, topk=(1, 3))
                 losses.update(loss.item(), inputs.size(0))
                 top1.update(acc1[0], inputs.size(0))
-                top5.update(acc5[0], inputs.size(0))
+                top3.update(acc3[0], inputs.size(0))
                 # measure elapsed time
                 batch_time.update(time.time() - end)
                 end = time.time()
@@ -401,6 +401,7 @@ def main():
     tensorboard_writer.flush()
 
     numclasses =len(class_names)
+    print("-------->" + str(img_shape))
     model_ft = createTorchCNNmodel(args.model_name, numclasses, img_shape, args.pretrained)
 
         # add_graph() will trace the sample input through your model,

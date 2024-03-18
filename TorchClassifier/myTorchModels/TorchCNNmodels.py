@@ -85,6 +85,8 @@ def createTorchCNNmodel(name, numclasses, img_shape, pretrained=True):
         return create_vggcustommodel(numclasses, img_shape)
     elif name=='resnetmodel1':
         return create_resnetmodel1(numclasses, img_shape)
+    elif name=="convnet":
+        return create_convnet(numclasses, img_shape)
     elif name=='customresnet':
         return setupCustomResNet(numclasses, 'resnet50')
     elif name in model_names:
@@ -113,6 +115,7 @@ def create_vggmodel1(numclasses, img_shape):
     last_layer = nn.Linear(n_inputs, numclasses)
 
     vgg16.classifier[6] = last_layer
+    return vgg16
     
 class VGG(nn.Module):
     def __init__(self, features, output_dim):
@@ -244,6 +247,7 @@ class CNNNet1(nn.Module): #32*32 image input
 
     def forward(self, x):
         # add sequence of convolutional and max pooling layers
+        print(x.shape)
         x = self.pool(F.relu(self.conv1(x))) # output size: 32*32*16, pool=16*16*16
         x = self.pool(F.relu(self.conv2(x))) # output 16*16*16, pool=8*8*16
         x = self.pool(F.relu(self.conv3(x))) # 8*8*64, pool=4*4*64
@@ -296,7 +300,7 @@ class MLP(nn.Module): #for MNIST dataset
 
 def create_mlpmodel1(numclasses, img_shape):
     #for MNIST dataset
-    INPUT_DIM = img_shape[1]*img_shape[2]#28 * 28
+    INPUT_DIM = img_shape[0] * img_shape[1]*img_shape[2]#28 * 28
     OUTPUT_DIM = numclasses
     model = MLP(INPUT_DIM, OUTPUT_DIM)
     print(model)
@@ -311,22 +315,26 @@ class LeNet(nn.Module):#for 28*28 MNIST dataset
     def __init__(self, output_dim):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_channels = 1, 
+        self.conv1 = nn.Conv2d(in_channels = 3, 
                                out_channels = 6, 
                                kernel_size = 5)
+        
+        
         
         self.conv2 = nn.Conv2d(in_channels = 6, 
                                out_channels = 16, 
                                kernel_size = 5)
         
-        self.fc_1 = nn.Linear(16 * 4 * 4, 120)
+
+        
+        self.fc_1 = nn.Linear(400, 120)
         self.fc_2 = nn.Linear(120, 84)
         self.fc_3 = nn.Linear(84, output_dim)
+
 
     def forward(self, x):
 
         #x = [batch size, 1, 28, 28]
-        
         x = self.conv1(x)
         
         #x = [batch size, 6, 24, 24]
@@ -336,27 +344,26 @@ class LeNet(nn.Module):#for 28*28 MNIST dataset
         #x = [batch size, 6, 12, 12]
         
         x = F.relu(x)
+
         
         x = self.conv2(x)
-        
+
         #x = [batch size, 16, 8, 8]
         
         x = F.max_pool2d(x, kernel_size = 2)
-        
+
         #x = [batch size, 16, 4, 4]
         
         x = F.relu(x)
-        
+  
         x = x.view(x.shape[0], -1)
         
         #x = [batch size, 16*4*4 = 256]
         
         h = x
-        
         x = self.fc_1(x)
         
         #x = [batch size, 120]
-        
         x = F.relu(x)
 
         x = self.fc_2(x)
@@ -436,11 +443,56 @@ def create_AlexNet(numclasses, img_shape):
 def create_resnetmodel1(numclasses, img_shape):
     #model_ft = models.resnet18(pretrained=True) #Downloading: "https://download.pytorch.org/models/resnet18-5c106cde.pth" to /home/lkk/.cache/torch/hub/checkpoints/resnet18-5c106cde.pth
     model_ft = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+    
     num_ftrs = model_ft.fc.in_features #512
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
     model_ft.fc = nn.Linear(num_ftrs, numclasses)
     return model_ft
+
+def create_convnet(num_classes, img_shape):
+    mobilenet = models.mobilenet_v2(pretrained=True)
+    
+    #convnet.fc = torch.nn.Linear(convnet.fc.in_features, num_classes)
+    # for idx, layer in enumerate(mobilenet.features):
+    #     if isinstance(layer, torchvision.models.mobilenetv2.InvertedResidual):
+    #         for sublayer in layer:
+    #             print(sublayer)
+    #         break
+    #num_ftrs = mobilenet.fc.in_features #512
+    # Here the size of each output sample is set to 2.
+    # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
+    #mobilenet.fc = nn.Linear(num_ftrs, num_classes)
+    
+    num_ftrs = mobilenet.classifier[1].in_features
+    mobilenet.classifier[1] = nn.Linear(num_ftrs, 3, bias=True)
+    # mobilenet.features[0][0].kernel_size = (5, 5)
+    # modified_block = nn.Sequential(
+
+                    
+    #                 # Customize layers here, for example:
+    #                 nn.Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1), groups = 32, bias = False),  # New convolutional layer
+    #                 nn.BatchNorm2d(32, eps=1e-05, momentum=0.1),
+    #                 nn.ReLU6(inplace=True),
+    #                 nn.Conv2d(32, 16, kernel_size=(1, 1), stride=(1, 1), bias=False),
+    #                 nn.BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    #             )
+    # modified_block2 = nn.Sequential(
+
+                    
+    #                 # Customize layers here, for example:
+    #                 nn.Conv2d(24, 144, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1), bias = False),  # New convolutional layer
+    #                 nn.BatchNorm2d(144, eps=1e-05, momentum=0.1),
+    #                 nn.ReLU6(inplace=True),
+    #                 nn.Conv2d(144, 144, kernel_size=(5, 5), stride=(1, 1), bias=False),
+    #                 nn.BatchNorm2d(144, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+    #                 nn.ReLU6(inplace=True),
+    #                 nn.Conv2d(144, 24, kernel_size=(1, 1), stride=(1, 1), bias=False),
+    #                 nn.BatchNorm2d(24, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+    #             )
+    # mobilenet.features[1] = modified_block
+    # mobilenet.features[3] = modified_block2
+    return mobilenet
 
 #https://pytorch.org/vision/stable/models.html
 # def create_torchvisionmodel(name, numclasses, pretrained):
@@ -530,3 +582,5 @@ def create_torchvisionmodel(modulename, numclasses, freezeparameters=True, pretr
         return pretrained_model
     else:
         print('Model name not exist.')
+
+
